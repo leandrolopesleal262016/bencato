@@ -1,0 +1,967 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Apropriação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/pt-br.js"></script>
+    <style>
+        .details-row {
+            transition: all 0.3s ease-out;
+        }
+        .details-row.hidden {
+            display: none;
+        }
+        .expand-icon {
+            transition: transform 0.3s ease;
+        }
+        .show-clientes-btn,
+        .show-obras-btn {
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .transition-shadow {
+            transition: box-shadow 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Menu Superior -->
+<nav class="bg-blue-600 shadow-lg">
+    <div class="max-w-7xl mx-auto px-0">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" 
+                     alt="Bencato Engenharia" 
+                     class="h-10 w-auto ml-1">
+            </div>
+            <div class="flex-grow flex justify-center items-center">
+                <span class="text-white text-3xl font-bold">DASHBOARD ANÁLISE CLIENTES</span>
+            </div>                    
+            <div class="flex items-center space-x-4 mr-4">
+                <button id="upload-btn" class="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-50">
+                    Carregar Arquivo
+                </button>
+                <button id="home-btn" class="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-50">
+                    Home
+                </button>
+            </div>
+        </div>
+    </div>
+ </nav>
+    <!-- Modal de Upload -->
+    <div id="upload-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium">Carregar Arquivo CSV</h3>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-500">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <form id="upload-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">
+                            Selecione o arquivo CSV
+                        </label>
+                        <input type="file" id="file-input" name="file" accept=".csv"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            Enviar Arquivo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Principal -->
+    <div class="container mx-auto px-4 py-4">
+
+<!-- Substituir a div do Seletor de Arquivo por: -->
+<div class="bg-white rounded-lg shadow p-4 mb-8">
+    <div class="flex items-center space-x-4">
+        <label class="text-sm font-medium text-gray-700">Arquivo atual:</label>
+        <select id="arquivo-select" class="form-select rounded-md border-gray-300 flex-grow">
+            <option value="">Selecione um arquivo</option>
+            {% for arquivo in arquivos %}
+            <option value="{{ arquivo }}">{{ arquivo }}</option>
+            {% endfor %}
+        </select>
+        <button id="delete-file-btn" 
+                class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled>
+            Excluir Arquivo
+        </button>
+    </div>
+</div>
+
+<!-- Indicador de carregamento -->
+<div id="loading-indicator" class="hidden flex items-center justify-center space-x-2 mt-2">
+    <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <span class="text-sm text-gray-600">Analisando arquivo...</span>
+</div>
+
+<!-- Filtros -->
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Filtros</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Pesquisar por Cliente</label>
+            <input type="text" id="cliente-search" 
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                   placeholder="Digite o nome do cliente">
+            <div id="cliente-suggestions" class="hidden mt-1 bg-white border border-gray-300 rounded-md shadow-sm"></div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Pesquisar por Fornecedor</label>
+            <input type="text" id="fornecedor-search"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                   placeholder="Digite o nome do fornecedor">
+            <div id="fornecedor-suggestions" class="hidden mt-1 bg-white border border-gray-300 rounded-md shadow-sm"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Métricas -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-700">Total de Registros</h3>
+        <p class="text-2xl font-bold text-blue-600" id="total-registros">-</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-700">Valor Total</h3>
+        <p class="text-2xl font-bold text-green-600" id="total-valor">-</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-700">Valor Médio</h3>
+        <p class="text-2xl font-bold text-purple-600" id="media-valor">-</p>
+    </div>
+</div>
+
+<!-- Top 10 Maiores Gastos -->
+<div class="bg-white rounded-lg shadow p-6 mb-8 top-10-section">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Top 10 Maiores Gastos</h2>
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fornecedor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Obra</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                </tr>
+            </thead>
+            <tbody id="top-10-body" class="bg-white divide-y divide-gray-200">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Análise de Fornecedores -->
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Análise de Fornecedores Mais Relevantes</h2>
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="fornecedor">
+                        Fornecedor
+                        <span class="ml-1 sort-icon">↕️</span>
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="total_gasto">
+                        Total Gasto
+                        <span class="ml-1 sort-icon">↕️</span>
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="quantidade_transacoes">
+                        Qtd. Transações
+                        <span class="ml-1 sort-icon">↕️</span>
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="valor_medio">
+                        Valor Médio
+                        <span class="ml-1 sort-icon">↕️</span>
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="quantidade_clientes">
+                        Qtd. Clientes
+                        <span class="ml-1 sort-icon">↕️</span>
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="quantidade_obras">
+                        Qtd. Obras
+                        <span class="ml-1 sort-icon">↕️</span>
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="tipos_custo_diferentes">
+                        Tipos Custo
+                        <span class="ml-1 sort-icon">↕️</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="fornecedores-body" class="bg-white divide-y divide-gray-200">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow p-6 h-[28rem]">
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">Evolução Temporal</h3>
+        <div class="h-[24rem]">
+            <canvas id="chart-temporal"></canvas>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 h-[28rem]">
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">Distribuição por Clientes</h3>
+        <div class="h-[24rem]">
+            <canvas id="chart-clientes"></canvas>
+        </div>
+    </div>
+</div>
+
+</div>
+<!-- Rodapé -->
+<footer class="bg-blue-600 text-white py-4 mt-8 w-full">
+    <div class="container mx-auto px-4 text-center">
+        Desenvolvido por Leandro Leal ® - 2024
+    </div>
+</footer>
+</body>
+</html>
+
+<script>
+    // Variáveis globais
+    let fornecedores = [];
+    let clientes = [];
+    let currentData = null;
+    let sortDirection = {};
+
+    // Função para formatar números como moeda
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(value);
+    };
+
+    // Função para formatar datas
+    const formatDate = (dateStr) => {
+        return moment(dateStr).format('DD/MM/YYYY');
+    };
+
+    // Função para gerenciar visibilidade das tabelas
+    function toggleTables(show) {
+        const topGastosSection = document.querySelector('.top-10-section');
+        
+        if (show) {
+            topGastosSection.classList.remove('hidden');
+        } else {
+            topGastosSection.classList.add('hidden');
+        }
+    }
+
+    // Função para filtrar sugestões
+    function filterSuggestions(input, lista) {
+        const value = input.toLowerCase();
+        return lista.filter(item => item.toLowerCase().includes(value));
+    }
+
+    // Função para mostrar sugestões
+    function showSuggestions(suggestions, containerID, inputID, onSelect) {
+        const container = document.getElementById(containerID);
+        container.innerHTML = '';
+        
+        if (suggestions.length > 0) {
+            suggestions.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer';
+                div.textContent = item;
+                div.onclick = () => {
+                    document.getElementById(inputID).value = item;
+                    container.classList.add('hidden');
+                    onSelect(item);
+                };
+                container.appendChild(div);
+            });
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
+    // Função para ordenar dados dos fornecedores
+    function sortFornecedoresData(data, column, direction) {
+        return [...data].sort((a, b) => {
+            let compareA = a[column];
+            let compareB = b[column];
+            
+            // Para texto, usar localeCompare
+            if (typeof compareA === 'string') {
+                return direction === 'asc' 
+                    ? compareA.localeCompare(compareB) 
+                    : compareB.localeCompare(compareA);
+            }
+            
+            // Para números
+            return direction === 'asc' 
+                ? compareA - compareB 
+                : compareB - compareA;
+        });
+    }
+
+ // Função para atualizar análise de fornecedores
+ function updateAnaliseFornecedores(data, sortColumn = null, sortDir = null) {
+        const tbody = document.getElementById('fornecedores-body');
+        tbody.innerHTML = '';
+
+        // Ordenar dados se necessário
+        let sortedData = data;
+        if (sortColumn) {
+            sortedData = sortFornecedoresData(data, sortColumn, sortDir);
+        }
+
+        sortedData.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50';
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <button class="expand-btn text-left w-full flex items-center" data-fornecedor="${item.fornecedor}">
+                        <span class="expand-icon mr-2">▶</span>
+                        ${item.fornecedor}
+                    </button>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    ${formatCurrency(item.total_gasto)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    ${item.quantidade_transacoes}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    ${formatCurrency(item.valor_medio)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    <button class="show-clientes-btn hover:text-blue-600" title="Clique para ver os clientes">
+                        ${item.quantidade_clientes}
+                    </button>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    <button class="show-obras-btn hover:text-blue-600" title="Clique para ver as obras">
+                        ${item.quantidade_obras}
+                    </button>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    ${item.tipos_custo_diferentes}
+                </td>`;
+            
+            // Criar linha de detalhes
+            const detailsRow = document.createElement('tr');
+            detailsRow.className = 'details-row hidden';
+            
+            // Obter lista única de todas as obras
+            const todasObras = Array.from(new Set(Object.values(item.clientes_obras).flat())).sort();
+            
+            detailsRow.innerHTML = `
+                <td colspan="7" class="px-6 py-4 bg-gray-50">
+                    <div class="ml-6 space-y-6">
+                        <!-- Seção de Clientes -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <h4 class="font-semibold text-lg text-gray-800 mb-4">
+                                Clientes (${item.quantidade_clientes}):
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                ${Object.entries(item.clientes_obras).map(([cliente, obras]) => `
+                                    <div class="border rounded-lg p-3 hover:shadow-md transition-shadow">
+                                        <div class="font-medium text-blue-600 mb-2">${cliente}</div>
+                                        <div class="text-sm text-gray-600">
+                                            <div class="font-medium mb-1">Obras vinculadas:</div>
+                                            ${obras.map(obra => `
+                                                <div class="ml-2 flex items-center">
+                                                    <span class="text-gray-400 mr-2">•</span>
+                                                    ${obra}
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Seção de Obras -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <h4 class="font-semibold text-lg text-gray-800 mb-4">
+                                Todas as Obras (${item.quantidade_obras}):
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                ${todasObras.map(obra => `
+                                    <div class="border rounded-lg p-2 text-sm text-gray-700 hover:shadow-md transition-shadow">
+                                        ${obra}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(tr);
+            tbody.appendChild(detailsRow);
+
+            // Adicionar eventos para os botões de visualização
+            const row = tbody.lastElementChild;
+            const clientesBtn = row.previousElementSibling.querySelector('.show-clientes-btn');
+            const obrasBtn = row.previousElementSibling.querySelector('.show-obras-btn');
+            const expandBtn = row.previousElementSibling.querySelector('.expand-btn');
+
+            [clientesBtn, obrasBtn, expandBtn].forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const icon = expandBtn.querySelector('.expand-icon');
+                    row.classList.toggle('hidden');
+                    icon.textContent = row.classList.contains('hidden') ? '▶' : '▼';
+                });
+            });
+        });
+
+        // Setup dos listeners de ordenação
+        const headers = document.querySelectorAll('th[data-sort]');
+        headers.forEach(header => {
+            if (!header.hasEventListener) {
+                header.hasEventListener = true;
+                header.addEventListener('click', () => {
+                    const column = header.getAttribute('data-sort');
+                    sortDirection[column] = sortDirection[column] === 'asc' ? 'desc' : 'asc';
+                    
+                    // Atualizar ícones
+                    headers.forEach(h => {
+                        const icon = h.querySelector('.sort-icon');
+                        if (h === header) {
+                            icon.textContent = sortDirection[column] === 'asc' ? '↑' : '↓';
+                        } else {
+                            icon.textContent = '↕️';
+                        }
+                    });
+
+                    updateAnaliseFornecedores(currentData.analise_fornecedores, column, sortDirection[column]);
+                });
+            }
+        });
+    }
+    
+// Função para atualizar top 10 gastos
+function updateTop10Gastos(data) {
+        const tbody = document.getElementById('top-10-body');
+        tbody.innerHTML = '';
+
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50';
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.data}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.fornecedor}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.cliente}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.obra}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.tipo_custo}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                    ${formatCurrency(item.valor)}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Função para atualizar os gráficos
+    function updateCharts(summary) {
+        // Limpa gráficos existentes
+        const chartTemporal = Chart.getChart('chart-temporal');
+        const chartClientes = Chart.getChart('chart-clientes');
+        if (chartTemporal) chartTemporal.destroy();
+        if (chartClientes) chartClientes.destroy();
+
+        // Gráfico temporal
+        const labels = Object.keys(summary.evolucao_temporal).sort();
+        const values = labels.map(label => summary.evolucao_temporal[label]);
+
+        new Chart(document.getElementById('chart-temporal').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels.map(label => moment(label).format('MMM/YYYY')),
+                datasets: [{
+                    label: 'Valor Total',
+                    data: values,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return formatCurrency(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+ // Calcula os totais por cliente
+ let clientesData = {};
+        currentData.table_data.forEach(row => {
+            if (row.cliente && row.cliente !== '-') {
+                clientesData[row.cliente] = (clientesData[row.cliente] || 0) + row.total;
+            }
+        });
+
+        // Ordena por valor e pega os top 10 clientes
+        let topClientes = Object.entries(clientesData)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+
+        // Prepara dados para o gráfico
+        const clientesLabels = topClientes.map(([cliente]) => cliente);
+        const clientesValues = topClientes.map(([_, valor]) => valor);
+
+        // Gráfico de distribuição por clientes
+        new Chart(document.getElementById('chart-clientes').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: clientesLabels,
+                datasets: [{
+                    label: 'Valor Total',
+                    data: clientesValues,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(199, 199, 199, 0.7)',
+                        'rgba(83, 102, 255, 0.7)',
+                        'rgba(40, 159, 64, 0.7)',
+                        'rgba(210, 199, 199, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 206, 86)',
+                        'rgb(75, 192, 192)',
+                        'rgb(153, 102, 255)',
+                        'rgb(255, 159, 64)',
+                        'rgb(199, 199, 199)',
+                        'rgb(83, 102, 255)',
+                        'rgb(40, 159, 64)',
+                        'rgb(210, 199, 199)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const valor = context.raw;
+                                const total = clientesValues.reduce((a, b) => a + b, 0);
+                                const percentual = ((valor / total) * 100).toFixed(1);
+                                return `${formatCurrency(valor)} (${percentual}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+ // Função para carregar os dados
+ async function loadData(filters = {}) {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    try {
+        // Mostra o indicador de carregamento
+        loadingIndicator.classList.remove('hidden');
+        
+        // Sempre incluir o arquivo atual selecionado nos filtros
+        const arquivoAtual = document.getElementById('arquivo-select').value;
+        if (arquivoAtual) {
+            filters.arquivo = arquivoAtual;
+        }
+        
+        if (!filters.arquivo) {
+            clearData();
+            return;
+        }
+        
+        let url = '/api/data';
+        const params = new URLSearchParams();
+        
+        if (filters.fornecedor) params.append('fornecedor', filters.fornecedor);
+        if (filters.cliente) params.append('cliente', filters.cliente);
+        if (filters.arquivo) params.append('arquivo', filters.arquivo);
+        if (params.toString()) url += '?' + params.toString();
+        
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        currentData = data || {
+            summary: {
+                total_registros: 0,
+                total_valor: 0,
+                media_valor: 0,
+                total_por_tipo: {},
+                evolucao_temporal: {}
+            },
+            table_data: [],
+            fornecedores: [],
+            clientes: [],
+            top_10_gastos: [],
+            analise_fornecedores: []
+        };
+
+        // Atualiza listas com verificação de undefined
+        fornecedores = currentData.fornecedores || [];
+        clientes = currentData.clientes || [];
+
+        // Atualiza os cards de métricas com verificação de undefined
+        document.getElementById('total-registros').textContent = 
+            ((currentData.summary && currentData.summary.total_registros) || 0).toLocaleString('pt-BR');
+        document.getElementById('total-valor').textContent = 
+            formatCurrency((currentData.summary && currentData.summary.total_valor) || 0);
+        document.getElementById('media-valor').textContent = 
+            formatCurrency((currentData.summary && currentData.summary.media_valor) || 0);
+
+        // Gerenciar visibilidade da tabela Top 10 com base nos filtros
+        const top10Section = document.querySelector('.top-10-section');
+        if (filters.fornecedor || filters.cliente) {
+            top10Section.classList.add('hidden');
+        } else {
+            top10Section.classList.remove('hidden');
+        }
+
+        // Atualiza os gráficos e tabelas com verificação de undefined
+        if (currentData.summary) updateCharts(currentData.summary);
+        if (currentData.top_10_gastos) updateTop10Gastos(currentData.top_10_gastos);
+        if (currentData.analise_fornecedores) updateAnaliseFornecedores(currentData.analise_fornecedores);
+
+    } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        alert('Erro ao carregar dados: ' + error.message);
+        clearData();
+    } finally {
+        loadingIndicator.classList.add('hidden');
+    }
+}
+ // Setup dos campos de pesquisa
+ function setupSearch() {
+    const clienteSearch = document.getElementById('cliente-search');
+    const fornecedorSearch = document.getElementById('fornecedor-search');
+
+    clienteSearch.addEventListener('input', (e) => {
+        const suggestions = filterSuggestions(e.target.value, clientes);
+        showSuggestions(suggestions, 'cliente-suggestions', 'cliente-search', (selected) => {
+            loadData({ 
+                cliente: selected,
+                arquivo: document.getElementById('arquivo-select').value // Mantém o arquivo selecionado
+            });
+        });
+    });
+
+    fornecedorSearch.addEventListener('input', (e) => {
+        const suggestions = filterSuggestions(e.target.value, fornecedores);
+        showSuggestions(suggestions, 'fornecedor-suggestions', 'fornecedor-search', (selected) => {
+            loadData({ 
+                fornecedor: selected,
+                arquivo: document.getElementById('arquivo-select').value // Mantém o arquivo selecionado
+            });
+        });
+    });
+
+    // Esconde sugestões ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (!e.target.matches('#cliente-search, #fornecedor-search')) {
+            document.getElementById('cliente-suggestions').classList.add('hidden');
+            document.getElementById('fornecedor-suggestions').classList.add('hidden');
+        }
+    });
+}
+    // Setup do formulário de upload
+    const uploadModal = document.getElementById('upload-modal');
+    const uploadBtn = document.getElementById('upload-btn');
+    const closeModal = document.getElementById('close-modal');
+    const uploadForm = document.getElementById('upload-form');
+    const arquivoSelect = document.getElementById('arquivo-select');
+
+    // Setup do botão Home
+    document.getElementById('home-btn').addEventListener('click', () => {
+    document.getElementById('cliente-search').value = '';
+    document.getElementById('fornecedor-search').value = '';
+    const top10Section = document.querySelector('.top-10-section');
+    top10Section.classList.remove('hidden');
+    loadData({arquivo: document.getElementById('arquivo-select').value});
+});
+
+    uploadBtn.addEventListener('click', () => {
+        uploadModal.classList.remove('hidden');
+    });
+
+    closeModal.addEventListener('click', () => {
+        uploadModal.classList.add('hidden');
+    });
+
+    uploadModal.addEventListener('click', (e) => {
+        if (e.target === uploadModal) {
+            uploadModal.classList.add('hidden');
+        }
+    });
+
+ // Handler do formulário de upload
+ uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        const fileInput = document.getElementById('file-input');
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // Adiciona novo arquivo ao select
+                const option = document.createElement('option');
+                option.value = result.filename;
+                option.textContent = result.filename;
+                arquivoSelect.appendChild(option);
+                // Seleciona o novo arquivo
+                arquivoSelect.value = result.filename;
+                // Recarrega os dados
+                loadData({ arquivo: result.filename });
+                // Fecha o modal
+                uploadModal.classList.add('hidden');
+                alert('Arquivo carregado com sucesso!');
+            } else {
+                alert('Erro ao carregar arquivo: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao enviar arquivo');
+        }
+    });
+
+  
+
+    // Handler para expandir/colapsar detalhes dos fornecedores
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.expand-btn')) {
+            const btn = e.target.closest('.expand-btn');
+            const row = btn.closest('tr');
+            const detailsRow = row.nextElementSibling;
+            const icon = btn.querySelector('.expand-icon');
+            
+            detailsRow.classList.toggle('hidden');
+            icon.textContent = detailsRow.classList.contains('hidden') ? '▶' : '▼';
+        }
+    });
+
+  // Setup do seletor de arquivo e botão de exclusão
+const deleteFileBtn = document.getElementById('delete-file-btn');
+
+arquivoSelect.addEventListener('change', () => {
+    const selectedFile = arquivoSelect.value;
+    deleteFileBtn.disabled = !selectedFile;
+    
+    if (selectedFile) {
+        loadData({ arquivo: selectedFile });
+    } else {
+        // Limpar interface quando nenhum arquivo estiver selecionado
+        clearData();
+    }
+});
+
+deleteFileBtn.addEventListener('click', async () => {
+    const selectedFile = arquivoSelect.value;
+    if (!selectedFile) return;
+    
+    if (confirm(`Deseja realmente excluir o arquivo ${selectedFile}?`)) {
+        try {
+            const response = await fetch('/delete_file', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `filename=${encodeURIComponent(selectedFile)}`
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Remove a opção do select
+                arquivoSelect.remove(arquivoSelect.selectedIndex);
+                arquivoSelect.value = '';
+                deleteFileBtn.disabled = true;
+                
+                // Limpa os dados da interface
+                clearData();
+                alert('Arquivo excluído com sucesso!');
+            } else {
+                alert(result.error || 'Erro ao excluir arquivo');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao excluir arquivo');
+        }
+    }
+});
+
+// Função para limpar dados da interface
+function clearData() {
+    // Esconde o indicador de carregamento
+    document.getElementById('loading-indicator').classList.add('hidden');
+    
+    // Limpar métricas com valores vazios apropriados
+    document.getElementById('total-registros').textContent = '-';
+    document.getElementById('total-valor').textContent = '-';
+    document.getElementById('media-valor').textContent = '-';
+    
+    // Limpar tabelas
+    document.getElementById('top-10-body').innerHTML = '';
+    document.getElementById('fornecedores-body').innerHTML = '';
+    
+    // Limpar gráficos com dados vazios apropriados
+    const chartTemporal = Chart.getChart('chart-temporal');
+    const chartClientes = Chart.getChart('chart-clientes');
+    
+    if (chartTemporal) chartTemporal.destroy();
+    if (chartClientes) chartClientes.destroy();
+
+    // Criar gráficos vazios
+    new Chart(document.getElementById('chart-temporal').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Valor Total',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('chart-clientes').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Valor Total',
+                data: [],
+                backgroundColor: [],
+                borderColor: [],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Limpar filtros
+    document.getElementById('cliente-search').value = '';
+    document.getElementById('fornecedor-search').value = '';
+    
+    // Resetar dados globais com objetos vazios apropriados
+    currentData = {
+        summary: {
+            total_registros: 0,
+            total_valor: 0,
+            media_valor: 0,
+            total_por_tipo: {},
+            evolucao_temporal: {}
+        },
+        table_data: [],
+        fornecedores: [],
+        clientes: [],
+        top_10_gastos: [],
+        analise_fornecedores: []
+    };
+    fornecedores = [];
+    clientes = [];
+}
+
+ // Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    setupSearch();
+    deleteFileBtn.disabled = !arquivoSelect.value;
+});
+</script>
+
+</body>
+</html>
