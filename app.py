@@ -1,9 +1,11 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for
+from flask import Flask, render_template, jsonify, request, redirect, url_for, send_file
 import pandas as pd
 import numpy as np
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
+from io import BytesIO
+import chardet
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv'}
@@ -207,7 +209,131 @@ def get_data():
     except Exception as e:
         print(f"Erro ao processar dados: {str(e)}")
         return jsonify({'error': str(e)}), 500
+# Para exportar CSV
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill
 
+@app.route('/export/excel')
+def export_excel():
+    try:
+        arquivo = request.args.get('arquivo')
+        fornecedor = request.args.get('fornecedor')
+        cliente = request.args.get('cliente')
+        
+        if not arquivo:
+            return jsonify({'error': 'Arquivo não especificado'}), 400
+
+        df = load_data(arquivo)
+        
+        if fornecedor:
+            df = df[df['fornecedor'].str.contains(fornecedor, case=False, na=False)]
+        if cliente:
+            df = df[df['cliente'].str.contains(cliente, case=False, na=False)]
+
+        # Criar workbook Excel
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Dados Exportados"
+
+        # Estilo para cabeçalho
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+
+        # Adicionar cabeçalhos
+        headers = ['Data', 'Fornecedor', 'Cliente', 'Obra', 'Tipo Custo', 'Valor']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+
+        # Adicionar dados
+        for row_idx, row in enumerate(df.iterrows(), 2):
+            ws.cell(row=row_idx, column=1, value=row[1]['data_entrada'].strftime('%d/%m/%Y'))
+            ws.cell(row=row_idx, column=2, value=str(row[1]['fornecedor']))
+            ws.cell(row=row_idx, column=3, value=str(row[1]['cliente']))
+            ws.cell(row=row_idx, column=4, value=str(row[1]['obra']))
+            ws.cell(row=row_idx, column=5, value=str(row[1]['tipo_custo']))
+            ws.cell(row=row_idx, column=6, value=float(row[1]['total']))
+
+        # Ajustar largura das colunas
+        for column in ws.columns:
+            max_length = 0
+            column = [cell for cell in column]
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(cell.value)
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            ws.column_dimensions[column[0].column_letter].width = adjusted_width
+
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f'relatorio_filtrado_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        )    
+    except Exception as e:
+        return jsonify({'error': f'Erro no processamento: {str(e)}'}), 500 
+    
+
+@app.route('/export/pdf')
+def export_pdf():
+    try:
+        arquivo = request.args.get('arquivo')
+        fornecedor = request.args.get('fornecedor')
+        cliente = request.args.get('cliente')
+        
+        if not arquivo:
+            return jsonify({'error': 'Arquivo não especificado'}), 400
+
+        df = load_data(arquivo)
+        
+        if fornecedor:
+            df = df[df['fornecedor'].str.contains(fornecedor, case=False, na=False)]
+        if cliente:
+            df = df[df['cliente'].str.contains(cliente, case=False, na=False)]
+
+        pdf = PDF()
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 10)
+
+        # Cabeçalhos
+        headers = ['Data', 'Fornecedor', 'Cliente', 'Obra', 'Tipo Custo', 'Valor']
+        col_width = 32  # Largura fixa para cada coluna
+        
+        for header in headers:
+            pdf.cell(col_width, 7, header, 1, 0, 'C')
+        pdf.ln()
+
+        # Dados
+        pdf.set_font('Arial', '', 8)
+        for _, row in df.iterrows():
+            pdf.cell(col_width, 6, row['data_entrada'].strftime('%d/%m/%Y'), 1)
+            pdf.cell(col_width, 6, str(row['fornecedor'])[:20], 1)
+            pdf.cell(col_width, 6, str(row['cliente'])[:20], 1)
+            pdf.cell(col_width, 6, str(row['obra'])[:20], 1)
+            pdf.cell(col_width, 6, str(row['tipo_custo'])[:20], 1)
+            pdf.cell(col_width, 6, f"R$ {row['total']:,.2f}", 1)
+            pdf.ln()
+
+        buffer = BytesIO()
+        pdf.output(buffer)
+        buffer.seek(0)
+
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'relatorio_{arquivo}.pdf'
+        )
+
+    except Exception as e:
+        return jsonify({'error': f'Erro no processamento: {str(e)}'}), 500
 if __name__ == '__main__':
     app.run(debug=True)
 

@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -30,81 +29,91 @@
     </style>
 </head>
 <body class="bg-gray-100">
-
     <!-- Menu Superior -->
-<nav class="bg-blue-600 shadow-lg">
-    <div class="max-w-7xl mx-auto px-0">
-        <div class="flex justify-between h-16">
-            <div class="flex items-center">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" 
-                     alt="Bencato Engenharia" 
-                     class="h-10 w-auto ml-1">
-            </div>
-            <div class="flex-grow flex justify-center items-center">
-                <span class="text-white text-3xl font-bold">DASHBOARD ANÁLISE CLIENTES</span>
-            </div>                    
-            <div class="flex items-center space-x-4 mr-4">
-                <button id="upload-btn" class="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-50">
-                    Carregar Arquivo
-                </button>
-                <button id="home-btn" class="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-50">
-                    Home
-                </button>
-            </div>
-        </div>
-    </div>
- </nav>
-    <!-- Modal de Upload -->
-    <div id="upload-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
-        <div class="flex items-center justify-center min-h-screen">
-            <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium">Carregar Arquivo CSV</h3>
-                    <button id="close-modal" class="text-gray-400 hover:text-gray-500">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
+    <nav class="bg-blue-600 shadow-lg">
+        <div class="max-w-7xl mx-auto px-0">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" 
+                         alt="Bencato Engenharia" 
+                         class="h-10 w-auto ml-1">
+                </div>
+                <div class="flex-grow flex justify-center items-center">
+                    <span class="text-white text-3xl font-bold">DASHBOARD ANÁLISE CLIENTES</span>
+                </div>                    
+                <div class="flex items-center space-x-4 mr-4">
+                    <button id="upload-btn" class="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-50">
+                        Carregar Arquivo
+                    </button>
+                    <button id="home-btn" class="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-50">
+                        Home
                     </button>
                 </div>
-                <form id="upload-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">
-                            Selecione o arquivo CSV
-                        </label>
-                        <input type="file" id="file-input" name="file" accept=".csv"
-                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
-                    </div>
-                    <div class="mt-4">
-                        <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                            Enviar Arquivo
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
-    </div>
-
-    <!-- Container Principal -->
-    <div class="container mx-auto px-4 py-4">
-
-<!-- Substituir a div do Seletor de Arquivo por: -->
-<div class="bg-white rounded-lg shadow p-4 mb-8">
-    <div class="flex items-center space-x-4">
-        <label class="text-sm font-medium text-gray-700">Arquivo atual:</label>
-        <select id="arquivo-select" class="form-select rounded-md border-gray-300 flex-grow">
-            <option value="">Selecione um arquivo</option>
-            {% for arquivo in arquivos %}
-            <option value="{{ arquivo }}">{{ arquivo }}</option>
-            {% endfor %}
-        </select>
-        <button id="delete-file-btn" 
-                class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                disabled>
-            Excluir Arquivo
-        </button>
+    </nav>
+<!-- Modal de Upload -->
+<div id="upload-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">Carregar Arquivo CSV</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="upload-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">
+                        Selecione o arquivo CSV
+                    </label>
+                    <input type="file" id="file-input" name="file" accept=".csv"
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        Enviar Arquivo
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+<!-- Container Principal -->
+<div class="container mx-auto px-4 py-4">
 
+    <!-- Seletor de Arquivo -->
+    <div class="bg-white rounded-lg shadow p-4 mb-8">
+        <div class="flex items-center space-x-4">
+            <label class="text-sm font-medium text-gray-700">Arquivo atual:</label>
+            <select id="arquivo-select" class="form-select rounded-md border-gray-300 flex-grow">
+                <option value="">Selecione um arquivo</option>
+                {% for arquivo in arquivos %}
+                <option value="{{ arquivo }}">{{ arquivo }}</option>
+                {% endfor %}
+            </select>
+            <button id="delete-file-btn" 
+                    class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    disabled>
+                Excluir Arquivo
+            </button>
+        </div>
+        
+        <!-- Novos botões de download -->
+        <div class="flex justify-end space-x-4 mt-4">
+            <button onclick="exportarDados('excel')" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    Download Excel
+            </button>
+
+            <button onclick="exportarDados('pdf')" 
+                    class="bg-orange-400 text-white px-4 py-2 rounded-md hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Download PDF
+            </button>
+        </div>
+    </div>
 <!-- Indicador de carregamento -->
 <div id="loading-indicator" class="hidden flex items-center justify-center space-x-2 mt-2">
     <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -231,15 +240,14 @@
     </div>
 </div>
 
-</div>
+</div> <!-- Fim do Container Principal -->
+
 <!-- Rodapé -->
 <footer class="bg-blue-600 text-white py-4 mt-8 w-full">
     <div class="container mx-auto px-4 text-center">
         Desenvolvido por Leandro Leal ® - 2024
     </div>
 </footer>
-</body>
-</html>
 
 <script>
     // Variáveis globais
@@ -261,8 +269,8 @@
         return moment(dateStr).format('DD/MM/YYYY');
     };
 
-    // Função para gerenciar visibilidade das tabelas
-    function toggleTables(show) {
+// Função para gerenciar visibilidade das tabelas
+function toggleTables(show) {
         const topGastosSection = document.querySelector('.top-10-section');
         
         if (show) {
@@ -320,9 +328,9 @@
                 : compareB - compareA;
         });
     }
-
- // Função para atualizar análise de fornecedores
- function updateAnaliseFornecedores(data, sortColumn = null, sortDir = null) {
+    
+// Função para atualizar análise de fornecedores
+function updateAnaliseFornecedores(data, sortColumn = null, sortDir = null) {
         const tbody = document.getElementById('fornecedores-body');
         tbody.innerHTML = '';
 
@@ -457,7 +465,7 @@
             }
         });
     }
-    
+
 // Função para atualizar top 10 gastos
 function updateTop10Gastos(data) {
         const tbody = document.getElementById('top-10-body');
@@ -532,8 +540,8 @@ function updateTop10Gastos(data) {
             }
         });
 
- // Calcula os totais por cliente
- let clientesData = {};
+        // Calcula os totais por cliente
+        let clientesData = {};
         currentData.table_data.forEach(row => {
             if (row.cliente && row.cliente !== '-') {
                 clientesData[row.cliente] = (clientesData[row.cliente] || 0) + row.total;
@@ -621,135 +629,138 @@ function updateTop10Gastos(data) {
         });
     }
 
- // Função para carregar os dados
- async function loadData(filters = {}) {
-    const loadingIndicator = document.getElementById('loading-indicator');
-    try {
-        // Mostra o indicador de carregamento
-        loadingIndicator.classList.remove('hidden');
-        
-        // Sempre incluir o arquivo atual selecionado nos filtros
-        const arquivoAtual = document.getElementById('arquivo-select').value;
-        if (arquivoAtual) {
-            filters.arquivo = arquivoAtual;
-        }
-        
-        if (!filters.arquivo) {
+// Função para carregar os dados
+async function loadData(filters = {}) {
+        const loadingIndicator = document.getElementById('loading-indicator');
+        try {
+            // Mostra o indicador de carregamento
+            loadingIndicator.classList.remove('hidden');
+            
+            // Sempre incluir o arquivo atual selecionado nos filtros
+            const arquivoAtual = document.getElementById('arquivo-select').value;
+            if (arquivoAtual) {
+                filters.arquivo = arquivoAtual;
+            }
+            
+            if (!filters.arquivo) {
+                clearData();
+                return;
+            }
+            
+            let url = '/api/data';
+            const params = new URLSearchParams();
+            
+            if (filters.fornecedor) params.append('fornecedor', filters.fornecedor);
+            if (filters.cliente) params.append('cliente', filters.cliente);
+            if (filters.arquivo) params.append('arquivo', filters.arquivo);
+            if (params.toString()) url += '?' + params.toString();
+            
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            currentData = data || {
+                summary: {
+                    total_registros: 0,
+                    total_valor: 0,
+                    media_valor: 0,
+                    total_por_tipo: {},
+                    evolucao_temporal: {}
+                },
+                table_data: [],
+                fornecedores: [],
+                clientes: [],
+                top_10_gastos: [],
+                analise_fornecedores: []
+            };
+
+            // Atualiza listas
+            fornecedores = currentData.fornecedores || [];
+            clientes = currentData.clientes || [];
+
+            // Atualiza os cards de métricas
+            document.getElementById('total-registros').textContent = 
+                ((currentData.summary && currentData.summary.total_registros) || 0).toLocaleString('pt-BR');
+            document.getElementById('total-valor').textContent = 
+                formatCurrency((currentData.summary && currentData.summary.total_valor) || 0);
+            document.getElementById('media-valor').textContent = 
+                formatCurrency((currentData.summary && currentData.summary.media_valor) || 0);
+
+            // Gerenciar visibilidade da tabela Top 10
+            const top10Section = document.querySelector('.top-10-section');
+            if (filters.fornecedor || filters.cliente) {
+                top10Section.classList.add('hidden');
+            } else {
+                top10Section.classList.remove('hidden');
+            }
+
+            // Atualiza os gráficos e tabelas
+            if (currentData.summary) updateCharts(currentData.summary);
+            if (currentData.top_10_gastos) updateTop10Gastos(currentData.top_10_gastos);
+            if (currentData.analise_fornecedores) updateAnaliseFornecedores(currentData.analise_fornecedores);
+
+        } catch (error) {
+            console.error('Erro ao carregar dados:', error);
+            alert('Erro ao carregar dados: ' + error.message);
             clearData();
-            return;
+        } finally {
+            loadingIndicator.classList.add('hidden');
         }
-        
-        let url = '/api/data';
-        const params = new URLSearchParams();
-        
-        if (filters.fornecedor) params.append('fornecedor', filters.fornecedor);
-        if (filters.cliente) params.append('cliente', filters.cliente);
-        if (filters.arquivo) params.append('arquivo', filters.arquivo);
-        if (params.toString()) url += '?' + params.toString();
-        
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.error) {
-            throw new Error(data.error);
-        }
-
-        currentData = data || {
-            summary: {
-                total_registros: 0,
-                total_valor: 0,
-                media_valor: 0,
-                total_por_tipo: {},
-                evolucao_temporal: {}
-            },
-            table_data: [],
-            fornecedores: [],
-            clientes: [],
-            top_10_gastos: [],
-            analise_fornecedores: []
-        };
-
-        // Atualiza listas com verificação de undefined
-        fornecedores = currentData.fornecedores || [];
-        clientes = currentData.clientes || [];
-
-        // Atualiza os cards de métricas com verificação de undefined
-        document.getElementById('total-registros').textContent = 
-            ((currentData.summary && currentData.summary.total_registros) || 0).toLocaleString('pt-BR');
-        document.getElementById('total-valor').textContent = 
-            formatCurrency((currentData.summary && currentData.summary.total_valor) || 0);
-        document.getElementById('media-valor').textContent = 
-            formatCurrency((currentData.summary && currentData.summary.media_valor) || 0);
-
-        // Gerenciar visibilidade da tabela Top 10 com base nos filtros
-        const top10Section = document.querySelector('.top-10-section');
-        if (filters.fornecedor || filters.cliente) {
-            top10Section.classList.add('hidden');
-        } else {
-            top10Section.classList.remove('hidden');
-        }
-
-        // Atualiza os gráficos e tabelas com verificação de undefined
-        if (currentData.summary) updateCharts(currentData.summary);
-        if (currentData.top_10_gastos) updateTop10Gastos(currentData.top_10_gastos);
-        if (currentData.analise_fornecedores) updateAnaliseFornecedores(currentData.analise_fornecedores);
-
-    } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        alert('Erro ao carregar dados: ' + error.message);
-        clearData();
-    } finally {
-        loadingIndicator.classList.add('hidden');
     }
-}
- // Setup dos campos de pesquisa
- function setupSearch() {
-    const clienteSearch = document.getElementById('cliente-search');
-    const fornecedorSearch = document.getElementById('fornecedor-search');
 
-    clienteSearch.addEventListener('input', (e) => {
-        const suggestions = filterSuggestions(e.target.value, clientes);
-        showSuggestions(suggestions, 'cliente-suggestions', 'cliente-search', (selected) => {
-            loadData({ 
-                cliente: selected,
-                arquivo: document.getElementById('arquivo-select').value // Mantém o arquivo selecionado
+    // Setup dos campos de pesquisa
+    function setupSearch() {
+        const clienteSearch = document.getElementById('cliente-search');
+        const fornecedorSearch = document.getElementById('fornecedor-search');
+
+        clienteSearch.addEventListener('input', (e) => {
+            const suggestions = filterSuggestions(e.target.value, clientes);
+            showSuggestions(suggestions, 'cliente-suggestions', 'cliente-search', (selected) => {
+                loadData({ 
+                    cliente: selected,
+                    arquivo: document.getElementById('arquivo-select').value
+                });
             });
         });
-    });
 
-    fornecedorSearch.addEventListener('input', (e) => {
-        const suggestions = filterSuggestions(e.target.value, fornecedores);
-        showSuggestions(suggestions, 'fornecedor-suggestions', 'fornecedor-search', (selected) => {
-            loadData({ 
-                fornecedor: selected,
-                arquivo: document.getElementById('arquivo-select').value // Mantém o arquivo selecionado
+        fornecedorSearch.addEventListener('input', (e) => {
+            const suggestions = filterSuggestions(e.target.value, fornecedores);
+            showSuggestions(suggestions, 'fornecedor-suggestions', 'fornecedor-search', (selected) => {
+                loadData({ 
+                    fornecedor: selected,
+                    arquivo: document.getElementById('arquivo-select').value
+                });
             });
         });
-    });
 
-    // Esconde sugestões ao clicar fora
-    document.addEventListener('click', (e) => {
-        if (!e.target.matches('#cliente-search, #fornecedor-search')) {
-            document.getElementById('cliente-suggestions').classList.add('hidden');
-            document.getElementById('fornecedor-suggestions').classList.add('hidden');
-        }
-    });
-}
-    // Setup do formulário de upload
+        // Esconde sugestões ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!e.target.matches('#cliente-search, #fornecedor-search')) {
+                document.getElementById('cliente-suggestions').classList.add('hidden');
+                document.getElementById('fornecedor-suggestions').classList.add('hidden');
+            }
+        });
+    }
+
+    // Setup do formulário de upload e eventos
     const uploadModal = document.getElementById('upload-modal');
     const uploadBtn = document.getElementById('upload-btn');
     const closeModal = document.getElementById('close-modal');
     const uploadForm = document.getElementById('upload-form');
     const arquivoSelect = document.getElementById('arquivo-select');
+    const deleteFileBtn = document.getElementById('delete-file-btn');
 
     // Setup do botão Home
     document.getElementById('home-btn').addEventListener('click', () => {
-    document.getElementById('cliente-search').value = '';
-    document.getElementById('fornecedor-search').value = '';
-    const top10Section = document.querySelector('.top-10-section');
-    top10Section.classList.remove('hidden');
-    loadData({arquivo: document.getElementById('arquivo-select').value});
-});
+        document.getElementById('cliente-search').value = '';
+        document.getElementById('fornecedor-search').value = '';
+        const top10Section = document.querySelector('.top-10-section');
+        top10Section.classList.remove('hidden');
+        loadData({arquivo: document.getElementById('arquivo-select').value});
+    });
 
     uploadBtn.addEventListener('click', () => {
         uploadModal.classList.remove('hidden');
@@ -765,8 +776,8 @@ function updateTop10Gastos(data) {
         }
     });
 
- // Handler do formulário de upload
- uploadForm.addEventListener('submit', async (e) => {
+    // Handler do formulário de upload
+    uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData();
         const fileInput = document.getElementById('file-input');
@@ -780,16 +791,12 @@ function updateTop10Gastos(data) {
             const result = await response.json();
 
             if (result.success) {
-                // Adiciona novo arquivo ao select
                 const option = document.createElement('option');
                 option.value = result.filename;
                 option.textContent = result.filename;
                 arquivoSelect.appendChild(option);
-                // Seleciona o novo arquivo
                 arquivoSelect.value = result.filename;
-                // Recarrega os dados
                 loadData({ arquivo: result.filename });
-                // Fecha o modal
                 uploadModal.classList.add('hidden');
                 alert('Arquivo carregado com sucesso!');
             } else {
@@ -800,8 +807,6 @@ function updateTop10Gastos(data) {
             alert('Erro ao enviar arquivo');
         }
     });
-
-  
 
     // Handler para expandir/colapsar detalhes dos fornecedores
     document.addEventListener('click', (e) => {
@@ -816,152 +821,162 @@ function updateTop10Gastos(data) {
         }
     });
 
-  // Setup do seletor de arquivo e botão de exclusão
-const deleteFileBtn = document.getElementById('delete-file-btn');
+    // Setup do seletor de arquivo e botão de exclusão
+    arquivoSelect.addEventListener('change', () => {
+        const selectedFile = arquivoSelect.value;
+        deleteFileBtn.disabled = !selectedFile;
+        
+        if (selectedFile) {
+            loadData({ arquivo: selectedFile });
+        } else {
+            clearData();
+        }
+    });
 
-arquivoSelect.addEventListener('change', () => {
-    const selectedFile = arquivoSelect.value;
-    deleteFileBtn.disabled = !selectedFile;
-    
-    if (selectedFile) {
-        loadData({ arquivo: selectedFile });
-    } else {
-        // Limpar interface quando nenhum arquivo estiver selecionado
-        clearData();
-    }
-});
-
-deleteFileBtn.addEventListener('click', async () => {
-    const selectedFile = arquivoSelect.value;
-    if (!selectedFile) return;
-    
-    if (confirm(`Deseja realmente excluir o arquivo ${selectedFile}?`)) {
-        try {
-            const response = await fetch('/delete_file', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `filename=${encodeURIComponent(selectedFile)}`
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                // Remove a opção do select
-                arquivoSelect.remove(arquivoSelect.selectedIndex);
-                arquivoSelect.value = '';
-                deleteFileBtn.disabled = true;
+    deleteFileBtn.addEventListener('click', async () => {
+        const selectedFile = arquivoSelect.value;
+        if (!selectedFile) return;
+        
+        if (confirm(`Deseja realmente excluir o arquivo ${selectedFile}?`)) {
+            try {
+                const response = await fetch('/delete_file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `filename=${encodeURIComponent(selectedFile)}`
+                });
                 
-                // Limpa os dados da interface
-                clearData();
-                alert('Arquivo excluído com sucesso!');
-            } else {
-                alert(result.error || 'Erro ao excluir arquivo');
+                const result = await response.json();
+                
+                if (result.success) {
+                    arquivoSelect.remove(arquivoSelect.selectedIndex);
+                    arquivoSelect.value = '';
+                    deleteFileBtn.disabled = true;
+                    clearData();
+                    alert('Arquivo excluído com sucesso!');
+                } else {
+                    alert(result.error || 'Erro ao excluir arquivo');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao excluir arquivo');
             }
-        } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao excluir arquivo');
         }
+    });
+
+    // Função para limpar dados da interface
+    function clearData() {
+        document.getElementById('loading-indicator').classList.add('hidden');
+        
+        document.getElementById('total-registros').textContent = '-';
+        document.getElementById('total-valor').textContent = '-';
+        document.getElementById('media-valor').textContent = '-';
+        
+        document.getElementById('top-10-body').innerHTML = '';
+        document.getElementById('fornecedores-body').innerHTML = '';
+        
+        const chartTemporal = Chart.getChart('chart-temporal');
+        const chartClientes = Chart.getChart('chart-clientes');
+        
+        if (chartTemporal) chartTemporal.destroy();
+        if (chartClientes) chartClientes.destroy();
+
+        // Criar gráficos vazios
+        new Chart(document.getElementById('chart-temporal').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Valor Total',
+                    data: [],
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('chart-clientes').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Valor Total',
+                    data: [],
+                    backgroundColor: [],
+                    borderColor: [],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        document.getElementById('cliente-search').value = '';
+        document.getElementById('fornecedor-search').value = '';
+        
+        currentData = {
+            summary: {
+                total_registros: 0,
+                total_valor: 0,
+                media_valor: 0,
+                total_por_tipo: {},
+                evolucao_temporal: {}
+            },
+            table_data: [],
+            fornecedores: [],
+            clientes: [],
+            top_10_gastos: [],
+            analise_fornecedores: []
+        };
+        fornecedores = [];
+        clientes = [];
     }
-});
 
-// Função para limpar dados da interface
-function clearData() {
-    // Esconde o indicador de carregamento
-    document.getElementById('loading-indicator').classList.add('hidden');
+    function exportarDados(tipo) {
+    const arquivo = document.getElementById('arquivo-select').value;
+    const cliente = document.getElementById('cliente-search').value;
+    const fornecedor = document.getElementById('fornecedor-search').value;
     
-    // Limpar métricas com valores vazios apropriados
-    document.getElementById('total-registros').textContent = '-';
-    document.getElementById('total-valor').textContent = '-';
-    document.getElementById('media-valor').textContent = '-';
-    
-    // Limpar tabelas
-    document.getElementById('top-10-body').innerHTML = '';
-    document.getElementById('fornecedores-body').innerHTML = '';
-    
-    // Limpar gráficos com dados vazios apropriados
-    const chartTemporal = Chart.getChart('chart-temporal');
-    const chartClientes = Chart.getChart('chart-clientes');
-    
-    if (chartTemporal) chartTemporal.destroy();
-    if (chartClientes) chartClientes.destroy();
+    if (!arquivo) {
+        alert('Selecione um arquivo primeiro');
+        return;
+    }
 
-    // Criar gráficos vazios
-    new Chart(document.getElementById('chart-temporal').getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Valor Total',
-                data: [],
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                fill: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            }
-        }
-    });
+    let url = `/export/${tipo}?arquivo=${encodeURIComponent(arquivo)}`;
+    
+    if (cliente) {
+        url += `&cliente=${encodeURIComponent(cliente)}`;
+    }
+    if (fornecedor) {
+        url += `&fornecedor=${encodeURIComponent(fornecedor)}`;
+    }
 
-    new Chart(document.getElementById('chart-clientes').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Valor Total',
-                data: [],
-                backgroundColor: [],
-                borderColor: [],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        }
-    });
-    
-    // Limpar filtros
-    document.getElementById('cliente-search').value = '';
-    document.getElementById('fornecedor-search').value = '';
-    
-    // Resetar dados globais com objetos vazios apropriados
-    currentData = {
-        summary: {
-            total_registros: 0,
-            total_valor: 0,
-            media_valor: 0,
-            total_por_tipo: {},
-            evolucao_temporal: {}
-        },
-        table_data: [],
-        fornecedores: [],
-        clientes: [],
-        top_10_gastos: [],
-        analise_fornecedores: []
-    };
-    fornecedores = [];
-    clientes = [];
+    window.location.href = url;
 }
 
- // Inicialização
-document.addEventListener('DOMContentLoaded', () => {
-    setupSearch();
-    deleteFileBtn.disabled = !arquivoSelect.value;
-});
-</script>
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+        setupSearch();
+        deleteFileBtn.disabled = !arquivoSelect.value;
+    });
 
+</script>
 </body>
 </html>
