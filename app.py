@@ -6,6 +6,8 @@ import os
 from werkzeug.utils import secure_filename
 from io import BytesIO
 import chardet
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv'}
@@ -209,9 +211,6 @@ def get_data():
     except Exception as e:
         print(f"Erro ao processar dados: {str(e)}")
         return jsonify({'error': str(e)}), 500
-# Para exportar CSV
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill
 
 @app.route('/export/excel')
 def export_excel():
@@ -281,68 +280,8 @@ def export_excel():
         return jsonify({'error': f'Erro no processamento: {str(e)}'}), 500 
     
 
-@app.route('/export/pdf')
-def export_pdf():
-    try:
-        arquivo = request.args.get('arquivo')
-        fornecedor = request.args.get('fornecedor')
-        cliente = request.args.get('cliente')
-        
-        if not arquivo:
-            return jsonify({'error': 'Arquivo não especificado'}), 400
-
-        df = load_data(arquivo)
-        
-        if fornecedor:
-            df = df[df['fornecedor'].str.contains(fornecedor, case=False, na=False)]
-        if cliente:
-            df = df[df['cliente'].str.contains(cliente, case=False, na=False)]
-
-        pdf = PDF()
-        pdf.add_page()
-        pdf.set_font('Arial', 'B', 10)
-
-        # Cabeçalhos
-        headers = ['Data', 'Fornecedor', 'Cliente', 'Obra', 'Tipo Custo', 'Valor']
-        col_width = 32  # Largura fixa para cada coluna
-        
-        for header in headers:
-            pdf.cell(col_width, 7, header, 1, 0, 'C')
-        pdf.ln()
-
-        # Dados
-        pdf.set_font('Arial', '', 8)
-        for _, row in df.iterrows():
-            pdf.cell(col_width, 6, row['data_entrada'].strftime('%d/%m/%Y'), 1)
-            pdf.cell(col_width, 6, str(row['fornecedor'])[:20], 1)
-            pdf.cell(col_width, 6, str(row['cliente'])[:20], 1)
-            pdf.cell(col_width, 6, str(row['obra'])[:20], 1)
-            pdf.cell(col_width, 6, str(row['tipo_custo'])[:20], 1)
-            pdf.cell(col_width, 6, f"R$ {row['total']:,.2f}", 1)
-            pdf.ln()
-
-        buffer = BytesIO()
-        pdf.output(buffer)
-        buffer.seek(0)
-
-        return send_file(
-            buffer,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=f'relatorio_{arquivo}.pdf'
-        )
-
-    except Exception as e:
-        return jsonify({'error': f'Erro no processamento: {str(e)}'}), 500
 if __name__ == '__main__':
     app.run(debug=True)
-
-from flask import Flask, render_template, jsonify, request, redirect, url_for, send_file
-import pandas as pd
-from fpdf import FPDF
-import io
-
-# Adicione estas novas funções após as funções existentes
 
 def export_to_csv(data):
     output = io.StringIO()
@@ -350,34 +289,6 @@ def export_to_csv(data):
     df.to_csv(output, index=False)
     output.seek(0)
     return output
-
-def export_to_pdf(data):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font('Arial', 'B', 12)
-    
-    # Definir cabeçalhos
-    headers = list(data[0].keys())
-    col_width = pdf.w / len(headers)
-    
-    # Adicionar cabeçalhos
-    for header in headers:
-        pdf.cell(col_width, 10, str(header), 1)
-    pdf.ln()
-    
-    # Adicionar dados
-    pdf.set_font('Arial', '', 10)
-    for row in data:
-        for item in row.values():
-            pdf.cell(col_width, 10, str(item)[:20], 1)
-        pdf.ln()
-    
-    output = io.BytesIO()
-    pdf.output(output, 'F')
-    output.seek(0)
-    return output
-
-# Adicione estas novas rotas
 
 @app.route('/export/<format>')
 def export_data(format):
@@ -423,21 +334,5 @@ def export_data(format):
             'Qtd Clientes': grupo['cliente'].nunique(),
             'Qtd Obras': grupo['obra'].nunique()
         } for nome, grupo in df.groupby('fornecedor') if not pd.isna(nome) and nome]
-        
-    if format == 'csv':
-        output = export_to_csv(data)
-        return send_file(
-            output,
-            mimetype='text/csv',
-            as_attachment=True,
-            download_name=f'relatorio_{export_type}_{datetime.now().strftime("%Y%m%d")}.csv'
-        )
+       
     
-    elif format == 'pdf':
-        output = export_to_pdf(data)
-        return send_file(
-            output,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=f'relatorio_{export_type}_{datetime.now().strftime("%Y%m%d")}.pdf'
-        )
